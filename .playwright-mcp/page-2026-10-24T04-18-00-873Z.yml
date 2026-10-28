@@ -1,0 +1,161 @@
+- generic [active] [ref=e1]:
+  - link "Lewati ke konten" [ref=e2] [cursor=pointer]:
+    - /url: "#konten"
+  - banner [ref=e3]:
+    - link "Survei Pemilih" [ref=e5] [cursor=pointer]:
+      - /url: http://127.0.0.1:8765/proyek
+      - generic [aria-hidden] [ref=e6]: S
+  - main [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e11]:
+        - heading "Proyek" [level=1] [ref=e12]
+        - paragraph [ref=e13]: Pilih proyek survei yang ingin Anda kelola, atau buat yang baru.
+      - region [ref=e14]:
+        - heading "Proyek yang sedang Anda kelola" [level=2] [ref=e15]
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - paragraph [ref=e18]: Survei Preferensi Pemilih Desa Makmur
+            - paragraph [ref=e19]:
+              - generic [ref=e20]: Berjalan
+          - link "Lanjutkan ke dashboard" [ref=e21] [cursor=pointer]:
+            - /url: http://127.0.0.1:8765/dashboard?proyek=1
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Cari nama proyek
+          - searchbox "Cari nama proyek" [ref=e25]
+        - generic [ref=e26]:
+          - generic [ref=e27]: Filter status
+          - combobox "Filter status" [ref=e28]:
+            - option "Semua" [selected]
+            - option "Draf"
+            - option "Berjalan"
+            - option "Selesai"
+        - button "Proyek baru" [ref=e29]
+      - region [ref=e30]:
+        - heading "Daftar proyek" [level=2] [ref=e31]
+        - table [ref=e33]:
+          - rowgroup [ref=e34]:
+            - row [ref=e35]:
+              - columnheader "Nama proyek" [ref=e36]
+              - columnheader "Mode data" [ref=e37]
+              - columnheader "Status" [ref=e38]
+              - columnheader "Progres" [ref=e39]
+              - columnheader "Dibuat" [ref=e40]
+              - columnheader "Terakhir diubah" [ref=e41]
+              - columnheader "Aksi" [ref=e42]
+          - rowgroup [ref=e43]:
+            - row [ref=e44]:
+              - cell "Survei Preferensi Pemilih Desa Makmur Sedang dibuka" [ref=e45]:
+                - paragraph [ref=e46]: Survei Preferensi Pemilih Desa Makmur
+                - generic [ref=e47]: Sedang dibuka
+              - 'cell "DPT lengkap Wilayah: Jaga" [ref=e48]':
+                - generic [ref=e49]: DPT lengkap
+                - paragraph [ref=e50]: "Wilayah: Jaga"
+              - cell "Berjalan" [ref=e51]
+              - cell [ref=e53]:
+                - paragraph [ref=e54]: 376 dari 600
+                - progressbar "Progres Survei Preferensi Pemilih Desa Makmur" [ref=e55]
+              - cell "12 Agu 2026" [ref=e57]
+              - cell "23 Okt 2026" [ref=e58]
+              - cell [ref=e59]:
+                - generic [ref=e60]:
+                  - link "Lanjutkan Survei Preferensi Pemilih Desa Makmur" [ref=e61] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=1
+                    - text: Lanjutkan
+                  - button "Duplikat Survei Preferensi Pemilih Desa Makmur" [ref=e62]: Duplikat
+                  - button "Menu lain untuk Survei Preferensi Pemilih Desa Makmur" [ref=e63]
+            - row [ref=e68]:
+              - cell [ref=e69]:
+                - paragraph [ref=e70]: Pilkades Sukamaju 2026
+              - 'cell "Responden saja Wilayah: RT" [ref=e71]':
+                - generic [ref=e72]: Responden saja
+                - paragraph [ref=e73]: "Wilayah: RT"
+              - cell "Berjalan" [ref=e74]
+              - cell [ref=e76]:
+                - paragraph [ref=e77]: 198 dari 240
+                - progressbar "Progres Pilkades Sukamaju 2026" [ref=e78]
+              - cell "02 Sep 2026" [ref=e80]
+              - cell "22 Okt 2026" [ref=e81]
+              - cell [ref=e82]:
+                - generic [ref=e83]:
+                  - link "Masuk ke Pilkades Sukamaju 2026" [ref=e84] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=2
+                    - text: Masuk
+                  - button "Duplikat Pilkades Sukamaju 2026" [ref=e85]: Duplikat
+                  - button "Menu lain untuk Pilkades Sukamaju 2026" [ref=e86]
+            - row [ref=e91]:
+              - cell [ref=e92]:
+                - paragraph [ref=e93]: Survei Pilkada Kota Tomohon
+              - 'cell "DPT lengkap Wilayah: Kelurahan" [ref=e94]':
+                - generic [ref=e95]: DPT lengkap
+                - paragraph [ref=e96]: "Wilayah: Kelurahan"
+              - cell "Selesai" [ref=e97]
+              - cell [ref=e99]:
+                - paragraph [ref=e100]: 800 dari 800
+                - progressbar "Progres Survei Pilkada Kota Tomohon" [ref=e101]
+              - cell "15 Mei 2026" [ref=e103]
+              - cell "30 Jul 2026" [ref=e104]
+              - cell [ref=e105]:
+                - generic [ref=e106]:
+                  - link "Masuk ke Survei Pilkada Kota Tomohon" [ref=e107] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=3
+                    - text: Masuk
+                  - button "Duplikat Survei Pilkada Kota Tomohon" [ref=e108]: Duplikat
+                  - button "Menu lain untuk Survei Pilkada Kota Tomohon" [ref=e109]
+            - row [ref=e114]:
+              - cell [ref=e115]:
+                - paragraph [ref=e116]: Uji Coba Kuesioner
+              - 'cell "Responden saja Wilayah: Dusun" [ref=e117]':
+                - generic [ref=e118]: Responden saja
+                - paragraph [ref=e119]: "Wilayah: Dusun"
+              - cell "Draf" [ref=e120]
+              - cell [ref=e122]:
+                - paragraph [ref=e123]: 0 dari 0
+                - progressbar "Progres Uji Coba Kuesioner" [ref=e124]
+              - cell "20 Okt 2026" [ref=e125]
+              - cell "20 Okt 2026" [ref=e126]
+              - cell [ref=e127]:
+                - generic [ref=e128]:
+                  - link "Masuk ke Uji Coba Kuesioner" [ref=e129] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=4
+                    - text: Masuk
+                  - button "Duplikat Uji Coba Kuesioner" [ref=e130]: Duplikat
+                  - button "Menu lain untuk Uji Coba Kuesioner" [ref=e131]
+            - row [ref=e136]:
+              - cell [ref=e137]:
+                - paragraph [ref=e138]: Survei Caleg DPRD Dapil 2
+              - 'cell "DPT lengkap Wilayah: Desa" [ref=e139]':
+                - generic [ref=e140]: DPT lengkap
+                - paragraph [ref=e141]: "Wilayah: Desa"
+              - cell "Selesai" [ref=e142]
+              - cell [ref=e144]:
+                - paragraph [ref=e145]: 1043 dari 1200
+                - progressbar "Progres Survei Caleg DPRD Dapil 2" [ref=e146]
+              - cell "03 Feb 2026" [ref=e148]
+              - cell "18 Apr 2026" [ref=e149]
+              - cell [ref=e150]:
+                - generic [ref=e151]:
+                  - link "Masuk ke Survei Caleg DPRD Dapil 2" [ref=e152] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=5
+                    - text: Masuk
+                  - button "Duplikat Survei Caleg DPRD Dapil 2" [ref=e153]: Duplikat
+                  - button "Menu lain untuk Survei Caleg DPRD Dapil 2" [ref=e154]
+            - row [ref=e159]:
+              - cell [ref=e160]:
+                - paragraph [ref=e161]: Survei Pilgub Sulawesi Utara
+              - 'cell "Responden saja Wilayah: Kecamatan" [ref=e162]':
+                - generic [ref=e163]: Responden saja
+                - paragraph [ref=e164]: "Wilayah: Kecamatan"
+              - cell "Berjalan" [ref=e165]
+              - cell [ref=e167]:
+                - paragraph [ref=e168]: 121 dari 450
+                - progressbar "Progres Survei Pilgub Sulawesi Utara" [ref=e169]
+              - cell "08 Okt 2026" [ref=e171]
+              - cell "21 Okt 2026" [ref=e172]
+              - cell [ref=e173]:
+                - generic [ref=e174]:
+                  - link "Masuk ke Survei Pilgub Sulawesi Utara" [ref=e175] [cursor=pointer]:
+                    - /url: http://127.0.0.1:8765/dashboard?proyek=6
+                    - text: Masuk
+                  - button "Duplikat Survei Pilgub Sulawesi Utara" [ref=e176]: Duplikat
+                  - button "Menu lain untuk Survei Pilgub Sulawesi Utara" [ref=e177]

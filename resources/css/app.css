@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
+    --color-accent: #0F6B6B;
+    --color-ink: #1F2933;
+}
+
+[x-cloak] {
+    display: none !important;
+}
