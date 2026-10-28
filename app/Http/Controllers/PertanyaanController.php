@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\DummyData;
+use App\Models\Project;
+use Illuminate\View\View;
 
 class PertanyaanController extends Controller
 {
-    public function index()
+    public function index(Project $project): View
     {
-        return view('pages.pertanyaan', DummyData::pertanyaan());
+        return view('pages.pertanyaan', compact('project'));
     }
 }

@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\DummyData;
+use App\Models\Project;
+use Illuminate\View\View;
 
 class StatistikController extends Controller
 {
-    public function index()
+    public function index(Project $project): View
     {
-        return view('pages.statistik', DummyData::statistik());
+        return view('pages.statistik', compact('project'));
     }
 }

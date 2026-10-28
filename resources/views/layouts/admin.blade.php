@@ -23,6 +23,10 @@
         ['pengaturan', 'Pengaturan', 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12h2M3 12h2M12 3v2M12 19v2'],
     ];
 
+
+    if (! $project->isFullDptMode()) {
+        $menu = array_values(array_filter($menu, fn ($item) => $item[0] !== 'dpt'));
+    }
 @endphp
 <body class="bg-slate-50 font-sans text-ink antialiased" x-data="{ sidebar: false }" @keydown.escape.window="sidebar = false">
 

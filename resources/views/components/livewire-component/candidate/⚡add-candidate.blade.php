@@ -72,6 +72,9 @@ new class extends Component
     <form method="POST" wire:submit="save" class="mt-5 space-y-5">
         @csrf
         <fieldset class="space-y-5 disabled:opacity-50">
+            @error('project')
+                <p class="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">{{ $message }}</p>
+            @enderror
             <x-field label="Nama" name="name" wire:model="name" required help="Wajib diisi." />
             @error('name')
                 <p class="-mt-4 text-sm text-red-600" role="alert">{{ $message }}</p>

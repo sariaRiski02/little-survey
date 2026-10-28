@@ -18,15 +18,16 @@ class SetCurrentProjectMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-       $project = $request->route('project');
+        $project = $request->route('project');
 
-
+        // The route binds by `code_project`, so the default must use the "param:field" key;
+        // a plain `project` key leaves an empty `?project=` on every generated link.
         URL::defaults([
-            'project' => $project->code_project,
+            'project:code_project' => $project->code_project,
         ]);
 
         View::share('project', $project);
 
         return $next($request);
-        }
+    }
 }
