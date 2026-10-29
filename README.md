@@ -115,14 +115,14 @@ Isi `.env` production di server, jangan commit file ini:
 ```dotenv
 APP_KEY=base64:<key-yang-dihasilkan>
 APP_URL=https://survey.example.com
-APP_PORT=8080
+APP_PORT=127.0.0.1:8080
 ADMIN_NAME=Administrator
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=<password-kuat>
-TRUSTED_PROXIES=
+TRUSTED_PROXIES=*
 ```
 
-Buat `APP_KEY` dengan `php artisan key:generate --show` pada checkout lokal atau gunakan perintah key generation pada bagian Docker. Simpan nilainya dengan aman dan jangan menggantinya setelah aplikasi mulai digunakan. `APP_URL` harus memakai URL publik aplikasi. Jika aplikasi berada di belakang reverse proxy, atur `TRUSTED_PROXIES` sesuai alamat proxy. Konfigurasikan HTTPS pada reverse proxy di depan container.
+Buat `APP_KEY` dengan `php artisan key:generate --show` pada checkout lokal atau gunakan perintah key generation pada bagian Docker. Simpan nilainya dengan aman dan jangan menggantinya setelah aplikasi mulai digunakan. `APP_URL` harus memakai URL publik aplikasi. Contoh di atas mengasumsikan aplikasi hanya dapat diakses melalui reverse proxy di host yang sama; karena port container dibatasi ke `127.0.0.1`, `TRUSTED_PROXIES=*` mempercayai header proxy hanya dari jalur tersebut. Konfigurasikan HTTPS pada reverse proxy di depan container.
 
 Image GHCR sebaiknya tetap private. Buat GitHub Personal Access Token (classic) dengan izin `read:packages`, lalu login ke GHCR **sebagai user SSH deployment** di server:
 

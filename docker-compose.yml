@@ -15,7 +15,6 @@ services:
     volumes:
       - sqlite-data:/data
       - app-storage:/var/www/html/storage/app
-
 volumes:
   sqlite-data:
   app-storage:
