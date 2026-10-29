@@ -3,6 +3,7 @@
 use App\Models\Dpt;
 use App\Models\Project;
 use App\Models\Respondent;
+use App\Models\User;
 use App\Services\RespondentService;
 use App\Services\StatistikService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +16,8 @@ use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 const RESP_LIST = 'livewire-component.responden.list-responden';
 const RESP_SUMMARY = 'livewire-component.responden.summary-responden';
@@ -276,9 +279,9 @@ it('validates manual respondent input', function () {
         ->assertHasErrors('nik');
 
     Livewire::test(RESP_ADD, ['project' => $project])
-        ->set('name', 'Salah')->set('nik', respondentNik('1990-05-15', false, '0002'))->set('birth_date', '1991-05-15')->set('gender', 'Laki-laki')->set('wilayah', 'A')
+        ->set('name', 'Beda Tanggal')->set('nik', respondentNik('1990-05-15', false, '0002'))->set('birth_date', '1991-05-15')->set('gender', 'Laki-laki')->set('wilayah', 'A')
         ->call('save')
-        ->assertHasErrors('birth_date');
+        ->assertHasNoErrors();
 });
 
 it('cannot add or import respondents in full dpt mode', function () {
@@ -358,4 +361,35 @@ it('exports the links as csv without formula injection', function () {
         ->toContain('Budi')
         ->toContain('/s/')
         ->not->toContain('Project Lain');
+});
+
+it('exports the wilayah column only when the project uses wilayah', function () {
+    $plain = Project::factory()->create();
+    Respondent::factory()->for($plain)->create(['name' => 'Tanpa Jaga']);
+
+    $withWilayah = Project::factory()->withWilayah('Jaga')->create();
+    Respondent::factory()->for($withWilayah)->create(['name' => 'Budi', 'wilayah' => 'Jaga 1']);
+
+    $plainCsv = $this->get(route('responden.export', ['project' => $plain->code_project]))->streamedContent();
+    $wilayahCsv = $this->get(route('responden.export', ['project' => $withWilayah->code_project]))->streamedContent();
+
+    expect($plainCsv)->toContain('Kode,Nama,"Nomor telepon"')->not->toContain('Wilayah')
+        ->and($wilayahCsv)->toContain('Kode,Nama,Jaga,')->toContain('Budi,"Jaga 1"');
+});
+
+it('exports only the links matching the wilayah and status filters', function () {
+    $project = Project::factory()->withWilayah('Jaga')->create();
+    Respondent::factory()->for($project)->create(['name' => 'Belum Satu', 'wilayah' => 'Jaga 1']);
+    Respondent::factory()->for($project)->create(['name' => 'Belum Dua', 'wilayah' => 'Jaga 2']);
+    Respondent::factory()->for($project)->sent()->create(['name' => 'Terkirim Satu', 'wilayah' => 'Jaga 1']);
+    Respondent::factory()->for($project)->filled()->create(['name' => 'Selesai Satu', 'wilayah' => 'Jaga 1']);
+
+    $export = fn (array $query) => $this->get(route('responden.export', ['project' => $project->code_project] + $query))->assertOk()->streamedContent();
+
+    expect($export(['wilayah' => 'Jaga 1']))->toContain('Belum Satu', 'Terkirim Satu', 'Selesai Satu')->not->toContain('Belum Dua')
+        ->and($export(['status' => 'belum']))->toContain('Belum Satu', 'Belum Dua')->not->toContain('Terkirim Satu')->not->toContain('Selesai Satu')
+        ->and($export(['wilayah' => 'Jaga 2', 'status' => 'belum']))->toContain('Belum Dua')->not->toContain('Belum Satu')
+        ->and($export([]))->toContain('Belum Satu', 'Belum Dua', 'Terkirim Satu', 'Selesai Satu');
+
+    $this->get(route('responden.export', ['project' => $project->code_project, 'status' => 'ngawur']))->assertSessionHasErrors('status');
 });

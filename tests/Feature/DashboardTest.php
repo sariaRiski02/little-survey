@@ -6,12 +6,15 @@ use App\Models\Project;
 use App\Models\Question;
 use App\Models\Respondent;
 use App\Models\RespondentAnswer;
+use App\Models\User;
 use App\Services\DashboardService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 function answer(Question $question, Respondent $respondent, ?string $value): void
 {

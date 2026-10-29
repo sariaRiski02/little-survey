@@ -2,7 +2,7 @@
 @section('title', 'DPT')
 @section('content')
 
-<div x-data="{ terkunci: {{ $project->is_dpt_locked ? 'true' : 'false' }}, tab: 'impor', hapus: false, hapusNama: '', hapusId: null, ubah: false, edit: { id: null, name: '', birth_date: '', wilayah: '' } }">
+<div x-data="{ terkunci: {{ $project->is_dpt_locked ? 'true' : 'false' }}, tab: 'impor', hapus: false, hapusMassal: false, hapusNama: '', hapusId: null, ubah: false, edit: { id: null, name: '', birth_date: '', wilayah: '' } }">
     <x-page-header title="DPT" subtitle="Daftar Pemilih Tetap sebagai dasar undian responden." />
 
     <div x-show="!terkunci" class="mb-8 rounded-2xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900" role="status">

@@ -128,6 +128,11 @@ new class extends Component
     @if ($this->sheet)
         <div>
             <p class="mb-3 font-bold">Langkah 2 — pemetaan kolom</p>
+            @if ($project->usesWilayah())
+                <p class="mb-4 rounded-2xl border border-teal-200 bg-teal-50 p-3 text-sm text-teal-900" role="note">
+                    Survei ini memakai wilayah (<strong>{{ $project->wilayah_label }}</strong>). Pastikan kolom {{ $project->wilayah_label }} di berkas Anda dipetakan ke "{{ $project->wilayah_label }}", karena wajib diisi dan dipakai untuk undian, filter, serta ekspor tautan per {{ $project->wilayah_label }}.
+                </p>
+            @endif
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($this->sheet['headers'] as $i => $header)
                     <div class="space-y-1.5" wire:key="peta-{{ $i }}">

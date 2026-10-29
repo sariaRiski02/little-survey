@@ -7,8 +7,8 @@ use App\Models\Project;
 use App\Models\Respondent;
 use App\Services\Concerns\ImportsSpreadsheets;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Support\Str;
@@ -79,7 +79,7 @@ class RespondentService
     {
         $search = trim((string) $search);
 
-        return $project->Respondent()
+        return $this->filtered($project, $wilayah, $status)
             ->when($search !== '', function ($query) use ($search) {
                 $like = '%'.addcslashes($search, '\\%_').'%';
                 $query->where(function ($q) use ($like, $search) {
@@ -90,12 +90,20 @@ class RespondentService
                     }
                 });
             })
+            ->orderBy('number')
+            ->paginate($perPage);
+    }
+
+    /**
+     * @return HasMany<Respondent, Project>
+     */
+    private function filtered(Project $project, ?string $wilayah, ?string $status): HasMany
+    {
+        return $project->Respondent()
             ->when(filled($wilayah), fn ($query) => $query->where('wilayah', $wilayah))
             ->when($status === Respondent::STATUS_NOT_SENT, fn ($query) => $query->whereNull('filled_at')->whereNull('link_sent_at'))
             ->when($status === Respondent::STATUS_SENT, fn ($query) => $query->whereNull('filled_at')->whereNotNull('link_sent_at'))
-            ->when($status === Respondent::STATUS_FILLED, fn ($query) => $query->whereNotNull('filled_at'))
-            ->orderBy('number')
-            ->paginate($perPage);
+            ->when($status === Respondent::STATUS_FILLED, fn ($query) => $query->whereNotNull('filled_at'));
     }
 
     /**
@@ -154,7 +162,7 @@ class RespondentService
             $nikRules[] = Rule::unique('respondents', 'nik')->where('project_id', $project->id);
         }
 
-        $validator = ValidatorFacade::make($data, [
+        return ValidatorFacade::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'nik' => $nikRules,
             'birth_date' => ['required', 'date_format:Y-m-d', 'before:today'],
@@ -178,16 +186,6 @@ class RespondentService
             'social_media.max' => 'Sosial media maksimal 255 karakter.',
             'phone.regex' => 'Nomor telepon tidak valid.',
         ]);
-
-        return $validator->after(function (Validator $validator) use ($data) {
-            if ($validator->errors()->hasAny(['nik', 'birth_date'])) {
-                return;
-            }
-
-            if (! $this->dptService->nikMatchesBirthDate((string) ($data['nik'] ?? ''), Carbon::parse($data['birth_date']))) {
-                $validator->errors()->add('birth_date', 'Tanggal lahir tidak cocok dengan NIK.');
-            }
-        });
     }
 
     /**
@@ -461,22 +459,28 @@ class RespondentService
 
     /**
      * Rows for the link export, without answers. Cells are neutralised against spreadsheet formula injection.
+     * The wilayah column is only included when the project uses wilayah.
      *
      * @return iterable<int, list<string>>
      */
-    public function exportRows(Project $project): iterable
+    public function exportRows(Project $project, ?string $wilayah = null, ?string $status = null): iterable
     {
-        yield ['Kode', 'Nama', $project->wilayah_label ?: 'Wilayah', 'Nomor telepon', 'Status', 'Tautan'];
+        $usesWilayah = $project->usesWilayah();
 
-        foreach ($project->Respondent()->orderBy('number')->lazyById(500) as $respondent) {
-            yield array_map($this->csvSafe(...), [
+        yield array_values(array_filter(
+            ['Kode', 'Nama', $usesWilayah ? $project->wilayah_label : null, 'Nomor telepon', 'Status', 'Tautan'],
+            fn ($heading) => $heading !== null,
+        ));
+
+        foreach ($this->filtered($project, $wilayah, $status)->orderBy('number')->lazyById(500) as $respondent) {
+            yield array_map($this->csvSafe(...), array_values(array_filter([
                 $respondent->code(),
                 $respondent->name,
-                (string) $respondent->wilayah,
+                $usesWilayah ? (string) $respondent->wilayah : null,
                 (string) $respondent->phone,
                 $respondent->status(),
                 $respondent->surveyUrl(),
-            ]);
+            ], fn ($cell) => $cell !== null)));
         }
     }
 

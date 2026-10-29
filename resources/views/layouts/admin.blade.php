@@ -20,6 +20,7 @@
         ['statistik', 'Statistik', 'M5 20V10M12 20V4M19 20v-7'],
         ['pertanyaan', 'Pertanyaan', 'M9 9a3 3 0 115 2c-1 1-2 1.5-2 3M12 18h.01'],
         ['responden', 'Responden', 'M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 10a4 4 0 100-8 4 4 0 000 8z'],
+        ['jawaban', 'Jawaban', 'M9 12h6M9 16h6M7 3h7l5 5v13H7zM14 3v5h5'],
         ['pengaturan', 'Pengaturan', 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12h2M3 12h2M12 3v2M12 19v2'],
     ];
 
@@ -58,6 +59,13 @@
                 </a>
             @endforeach
         </nav>
+        <form method="POST" action="{{ route('logout') }}" class="mt-auto pt-6">
+            @csrf
+            <button type="submit" class="flex min-h-11 w-full items-center gap-3 rounded-2xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                Keluar
+            </button>
+        </form>
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col lg:pl-72">

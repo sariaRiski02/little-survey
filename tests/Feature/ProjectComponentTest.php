@@ -1,11 +1,14 @@
 <?php
 
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 test('daftar proyek tampil di halaman', function () {
     $project = Project::factory()->create(['name' => 'Survei Kota Contoh']);

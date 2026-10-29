@@ -17,6 +17,11 @@ new class extends Component
 
     public string $filterWilayah = '';
 
+    /** @var list<string> */
+    public array $selected = [];
+
+    public bool $selectAllMatching = false;
+
     public function mount(Project $project)
     {
         $this->project = $project;
@@ -25,17 +30,67 @@ new class extends Component
     public function updatedSearch()
     {
         $this->resetPage();
+        $this->clearSelection();
     }
 
     public function updatedFilterWilayah()
     {
         $this->resetPage();
+        $this->clearSelection();
+    }
+
+    public function updatedSelected()
+    {
+        $this->selectAllMatching = false;
+    }
+
+    public function togglePage()
+    {
+        $pageIds = $this->rows->getCollection()->pluck('id')->map(fn ($id) => (string) $id)->all();
+
+        $this->selected = $this->pageIsSelected()
+            ? array_values(array_diff($this->selected, $pageIds))
+            : array_values(array_unique([...$this->selected, ...$pageIds]));
+        $this->selectAllMatching = false;
+    }
+
+    public function selectAllFiltered()
+    {
+        $this->selectAllMatching = true;
+    }
+
+    public function clearSelection()
+    {
+        $this->selected = [];
+        $this->selectAllMatching = false;
+    }
+
+    public function pageIsSelected(): bool
+    {
+        $pageIds = $this->rows->getCollection()->pluck('id')->map(fn ($id) => (string) $id)->all();
+
+        return $pageIds !== [] && array_diff($pageIds, $this->selected) === [];
+    }
+
+    public function deleteSelected(DptService $service)
+    {
+        if ($this->selectAllMatching) {
+            $service->deleteMatching($this->project, $this->search, $this->filterWilayah);
+        } else {
+            $service->deleteMany($this->project, $this->selected);
+        }
+
+        $this->clearSelection();
+        $this->resetPage();
+        $this->refreshList();
+        $this->dispatch('dpt-changed');
+        $this->dispatch('dpt-saved');
     }
 
     #[On('dpt-changed')]
     public function refreshList()
     {
-        unset($this->rows, $this->wilayahOptions);
+        unset($this->rows, $this->wilayahOptions, $this->selectedCount);
     }
 
     public function delete($id, DptService $service)
@@ -61,7 +116,7 @@ new class extends Component
             $data['wilayah'] = trim((string) ($dataDpt['wilayah'] ?? ''));
         }
 
-        $service->validator($this->project, $data, $dpt)->validate();
+        $service->validator($this->project, $data)->validate();
         $service->update($this->project, $id, $data);
 
         $this->refreshList();
@@ -81,6 +136,12 @@ new class extends Component
     }
 
     #[Computed]
+    public function selectedCount(): int
+    {
+        return $this->selectAllMatching ? $this->rows->total() : count($this->selected);
+    }
+
+    #[Computed]
     public function wilayahOptions(): array
     {
         return app(DptService::class)->wilayahOptions($this->project);
@@ -96,7 +157,7 @@ new class extends Component
     $rows = $this->rows;
 @endphp
 
-<section aria-labelledby="h-tabel" class="rounded-2xl border border-slate-200 bg-white p-6" @dpt-saved.window="ubah = false; hapus = false">
+<section aria-labelledby="h-tabel" class="rounded-2xl border border-slate-200 bg-white p-6" @dpt-saved.window="ubah = false; hapus = false; hapusMassal = false">
     <h2 id="h-tabel" class="text-lg font-extrabold">Data DPT</h2>
     @error('project')
         <p class="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">{{ $message }}</p>
@@ -119,10 +180,27 @@ new class extends Component
     </div>
 
     @if ($rows->count())
+        @if ($this->selectedCount > 0)
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm" role="status">
+                <p>
+                    <strong>{{ number_format($this->selectedCount, 0, ',', '.') }}</strong> data dipilih.
+                    @if (! $selectAllMatching && $rows->total() > count($selected) && $this->pageIsSelected())
+                        <button type="button" wire:click="selectAllFiltered" class="font-bold text-accent underline focus-visible:outline-2 focus-visible:outline-accent">Pilih semua {{ number_format($rows->total(), 0, ',', '.') }} data{{ $search !== '' || $filterWilayah !== '' ? ' hasil filter' : '' }}</button>
+                    @endif
+                </p>
+                <div class="flex gap-2">
+                    <button type="button" wire:click="clearSelection" class="{{ $btnGhost }}">Batal pilih</button>
+                    <button type="button" :disabled="terkunci" @click="hapusMassal = true" class="min-h-11 rounded-2xl bg-rose-700 px-4 text-sm font-bold text-white hover:bg-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700 disabled:cursor-not-allowed disabled:opacity-50">Hapus terpilih</button>
+                </div>
+            </div>
+        @endif
         <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
-            <table class="w-full min-w-[44rem] text-left text-sm">
+            <table class="w-full min-w-[48rem] text-left text-sm">
                 <thead class="bg-slate-50 text-slate-600">
                     <tr>
+                        <th scope="col" class="w-12 px-4 py-3">
+                            <input type="checkbox" wire:click="togglePage" @checked($this->pageIsSelected()) :disabled="terkunci" aria-label="Pilih semua data di halaman ini" class="h-5 w-5 rounded border-slate-300 accent-teal-700">
+                        </th>
                         @foreach (array_filter(['Nama', 'NIK', 'Tanggal lahir', $usesWilayah ? $project->wilayah_label : null, 'Responden']) as $heading)<th scope="col" class="px-4 py-3 font-bold">{{ $heading }}</th>@endforeach
                         <th scope="col" class="px-4 py-3 text-right font-bold">Aksi</th>
                     </tr>
@@ -130,6 +208,9 @@ new class extends Component
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($rows as $row)
                         <tr wire:key="dpt-{{ $row->id }}">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" wire:model.live="selected" value="{{ $row->id }}" :disabled="terkunci" aria-label="Pilih {{ $row->name }}" class="h-5 w-5 rounded border-slate-300 accent-teal-700">
+                            </td>
                             <td class="px-4 py-3 font-semibold">{{ $row->name }}</td>
                             <td class="px-4 py-3 font-mono">{{ $row->nik }}</td>
                             <td class="px-4 py-3">{{ $row->birth_date->format('d/m/Y') }}</td>
@@ -162,6 +243,14 @@ new class extends Component
         <x-slot:footer>
             <button type="button" @click="hapus = false" class="{{ $btnGhost }}">Batal</button>
             <button type="button" @click="$wire.delete(hapusId)" class="min-h-11 rounded-2xl bg-rose-700 px-4 font-bold text-white hover:bg-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700">Ya, hapus</button>
+        </x-slot:footer>
+    </x-modal>
+
+    <x-modal show="hapusMassal" title="Hapus data terpilih?">
+        <strong>{{ number_format($this->selectedCount, 0, ',', '.') }}</strong> data DPT akan dihapus. Tindakan ini tidak dapat dibatalkan.
+        <x-slot:footer>
+            <button type="button" @click="hapusMassal = false" class="{{ $btnGhost }}">Batal</button>
+            <button type="button" wire:click="deleteSelected" wire:loading.attr="disabled" wire:target="deleteSelected" class="min-h-11 rounded-2xl bg-rose-700 px-4 font-bold text-white hover:bg-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700 disabled:opacity-50">Ya, hapus</button>
         </x-slot:footer>
     </x-modal>
 

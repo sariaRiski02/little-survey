@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: little-survey
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      APP_KEY: ${APP_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      ADMIN_NAME: ${ADMIN_NAME:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - sqlite-data:/data
+      - app-storage:/var/www/html/storage/app
+
+volumes:
+  sqlite-data:
+  app-storage:

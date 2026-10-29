@@ -3,12 +3,15 @@
 use App\Models\Candidate;
 use App\Models\Project;
 use App\Models\Question;
+use App\Models\User;
 use App\Services\QuestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 const QUESTION_ADD = 'livewire-component.question.add-question';
 const QUESTION_LIST = 'livewire-component.question.list-question';

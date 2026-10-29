@@ -5,6 +5,7 @@ use App\Models\Project;
 use App\Models\Question;
 use App\Models\Respondent;
 use App\Models\RespondentAnswer;
+use App\Models\User;
 use App\Services\SignificanceService;
 use App\Services\Statistics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,6 +13,8 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 /**
  * @return array{0: Project, 1: Question}

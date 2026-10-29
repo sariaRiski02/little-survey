@@ -5,9 +5,8 @@ namespace App\Services;
 use App\Models\Dpt;
 use App\Models\Project;
 use App\Services\Concerns\ImportsSpreadsheets;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -100,12 +99,55 @@ class DptService
         $project->Dpt()->findOrFail($id)->delete();
     }
 
+    /**
+     * Delete the given DPT rows of the project. Ids from other projects are ignored.
+     *
+     * @param  list<int|string>  $ids
+     * @return int number of deleted rows
+     */
+    public function deleteMany(Project $project, array $ids): int
+    {
+        $this->ensureUnlocked($project);
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        $deleted = 0;
+
+        foreach (array_chunk($ids, 500) as $chunk) {
+            $deleted += $project->Dpt()->whereKey($chunk)->delete();
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * Delete every DPT row matching the list filters (search and wilayah).
+     *
+     * @return int number of deleted rows
+     */
+    public function deleteMatching(Project $project, ?string $search = null, ?string $wilayah = null): int
+    {
+        $this->ensureUnlocked($project);
+
+        return $this->filtered($project, $search, $wilayah)->delete();
+    }
+
     public function find(Project $project, int|string $id): Dpt
     {
         return $project->Dpt()->findOrFail($id);
     }
 
     public function paginate(Project $project, ?string $search = null, ?string $wilayah = null, int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->filtered($project, $search, $wilayah)
+            ->orderBy('name')
+            ->orderBy('id')
+            ->paginate($perPage);
+    }
+
+    /**
+     * @return HasMany<Dpt, Project>
+     */
+    private function filtered(Project $project, ?string $search, ?string $wilayah): HasMany
     {
         $search = trim((string) $search);
 
@@ -114,10 +156,7 @@ class DptService
                 $like = '%'.addcslashes($search, '\\%_').'%';
                 $query->where(fn ($q) => $q->where('name', 'like', $like)->orWhere('nik', 'like', $like));
             })
-            ->when(filled($wilayah), fn ($query) => $query->where('wilayah', $wilayah))
-            ->orderBy('name')
-            ->orderBy('id')
-            ->paginate($perPage);
+            ->when(filled($wilayah), fn ($query) => $query->where('wilayah', $wilayah));
     }
 
     /**
@@ -157,9 +196,9 @@ class DptService
     }
 
     /**
-     * Build a validator for a DPT row. When `$existing` is given the NIK is taken from it.
+     * Build a validator for a DPT row. Only the keys present in `$data` are validated.
      */
-    public function validator(Project $project, array $data, ?Dpt $existing = null, bool $checkNikUnique = true): Validator
+    public function validator(Project $project, array $data, bool $checkNikUnique = true): Validator
     {
         $rules = [
             'name' => ['required', 'string', 'max:255'],
@@ -174,41 +213,11 @@ class DptService
             $rules['nik'][] = Rule::unique('dpts', 'nik')->where('project_id', $project->id);
         }
 
-        $validator = ValidatorFacade::make(
+        return ValidatorFacade::make(
             $data,
             array_intersect_key($rules, $data),
             $this->messages($project),
         );
-
-        return $validator->after(function (Validator $validator) use ($data, $existing) {
-            $nik = $existing?->nik ?? ($data['nik'] ?? null);
-            $birthDate = $data['birth_date'] ?? null;
-
-            if ($validator->errors()->hasAny(['nik', 'birth_date']) || ! $nik || ! $birthDate) {
-                return;
-            }
-
-            if (! $this->nikMatchesBirthDate((string) $nik, Carbon::parse($birthDate))) {
-                $validator->errors()->add('birth_date', 'Tanggal lahir tidak cocok dengan NIK.');
-            }
-        });
-    }
-
-    /**
-     * NIK digits 7-12 hold the birth date as DDMMYY, with 40 added to DD for women.
-     */
-    public function nikMatchesBirthDate(string $nik, CarbonInterface $birthDate): bool
-    {
-        if (! preg_match('/^\d{16}$/', $nik)) {
-            return false;
-        }
-
-        $day = (int) substr($nik, 6, 2);
-        $day = $day > 40 ? $day - 40 : $day;
-
-        return $day === $birthDate->day
-            && (int) substr($nik, 8, 2) === $birthDate->month
-            && (int) substr($nik, 10, 2) === $birthDate->year % 100;
     }
 
     /**
@@ -290,7 +299,7 @@ class DptService
             $data = Arr::except($record, ['row']);
             $label = $record['name'] ?? '';
 
-            $validator = $this->validator($project, $data, null, false);
+            $validator = $this->validator($project, $data, false);
 
             if ($validator->fails()) {
                 $result['problems'][] = ['row' => $number, 'name' => $label, 'reason' => $validator->errors()->first(), 'tone' => 'danger'];

@@ -4,6 +4,7 @@ use App\Models\Candidate;
 use App\Models\Dpt;
 use App\Models\Project;
 use App\Models\SampleDraw;
+use App\Models\User;
 use App\Services\StatistikService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -11,6 +12,8 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 const STAT_PARAMETER = 'livewire-component.statistik.sample-parameter';
 const STAT_RESULT = 'livewire-component.statistik.sample-result';

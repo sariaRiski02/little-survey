@@ -2,6 +2,7 @@
 
 use App\Models\Dpt;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\DptService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Testing\File;
@@ -12,6 +13,8 @@ use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 const DPT_LIST = 'livewire-component.dpt.list-dpt';
 const DPT_ADD = 'livewire-component.dpt.add-dpt';
@@ -104,9 +107,9 @@ it('validates manual input', function () {
         ->assertHasErrors(['nik']);
 
     Livewire::test(DPT_ADD, ['project' => $project])
-        ->set('name', 'Salah')->set('nik', nikFor('1990-05-15', false, '0002'))->set('birth_date', '1991-05-15')->set('wilayah', 'A')
+        ->set('name', 'Beda Tanggal')->set('nik', nikFor('1990-05-15', false, '0002'))->set('birth_date', '1991-05-15')->set('wilayah', 'A')
         ->call('save')
-        ->assertHasErrors(['birth_date']);
+        ->assertHasNoErrors();
 });
 
 it('allows the same nik in another project', function () {
@@ -148,15 +151,15 @@ it('updates a dpt row', function () {
     expect($dpt->fresh())->name->toBe('Nama Baru')->wilayah->toBe('Baru');
 });
 
-it('rejects an update whose birth date does not match the nik', function () {
+it('accepts an update whose birth date differs from the nik', function () {
     $project = Project::factory()->create();
     $dpt = Dpt::factory()->for($project)->create(['name' => 'Asli', 'nik' => nikFor('1990-05-15'), 'birth_date' => '1990-05-15']);
 
     Livewire::test(DPT_LIST, ['project' => $project])
         ->call('update', ['id' => $dpt->id, 'name' => 'X', 'birth_date' => '1991-01-01'])
-        ->assertHasErrors('birth_date');
+        ->assertHasNoErrors();
 
-    expect($dpt->fresh()->name)->toBe('Asli');
+    expect($dpt->fresh())->name->toBe('X')->birth_date->format('Y-m-d')->toBe('1991-01-01');
 });
 
 it('deletes a dpt row', function () {
@@ -166,6 +169,55 @@ it('deletes a dpt row', function () {
     Livewire::test(DPT_LIST, ['project' => $project])->call('delete', $dpt->id);
 
     expect(Dpt::find($dpt->id))->toBeNull();
+});
+
+it('deletes the selected dpt rows only', function () {
+    $project = Project::factory()->create();
+    $rows = Dpt::factory()->for($project)->count(4)->create();
+    $foreign = Dpt::factory()->create();
+
+    Livewire::test(DPT_LIST, ['project' => $project])
+        ->set('selected', [(string) $rows[0]->id, (string) $rows[1]->id, (string) $foreign->id])
+        ->call('deleteSelected')
+        ->assertSet('selected', []);
+
+    expect(Dpt::whereKey($rows->pluck('id'))->count())->toBe(2)
+        ->and(Dpt::find($foreign->id))->not->toBeNull();
+});
+
+it('selects a whole page and then every row matching the filter', function () {
+    $project = Project::factory()->withWilayah('Desa')->create();
+    Dpt::factory()->for($project)->count(15)->create(['wilayah' => 'A']);
+    $kept = Dpt::factory()->for($project)->count(3)->create(['wilayah' => 'B']);
+    $other = Dpt::factory()->create(['wilayah' => 'A']);
+
+    $component = Livewire::test(DPT_LIST, ['project' => $project])
+        ->set('filterWilayah', 'A')
+        ->call('togglePage');
+
+    expect($component->get('selected'))->toHaveCount(10);
+
+    $component->call('togglePage')->assertSet('selected', []);
+
+    $component->call('togglePage')
+        ->call('selectAllFiltered')
+        ->assertSet('selectAllMatching', true)
+        ->call('deleteSelected');
+
+    expect($project->Dpt()->where('wilayah', 'A')->count())->toBe(0)
+        ->and($project->Dpt()->count())->toBe(3)
+        ->and(Dpt::find($other->id))->not->toBeNull()
+        ->and(Dpt::whereKey($kept->pluck('id'))->count())->toBe(3);
+});
+
+it('clears the selection when the filter changes', function () {
+    $project = Project::factory()->create();
+    $dpt = Dpt::factory()->for($project)->create();
+
+    Livewire::test(DPT_LIST, ['project' => $project])
+        ->set('selected', [(string) $dpt->id])
+        ->set('search', 'abc')
+        ->assertSet('selected', []);
 });
 
 it('cannot touch a dpt row from another project', function () {
@@ -193,6 +245,14 @@ it('blocks add, update, delete and import when the dpt is locked', function () {
         ->call('update', ['id' => $dpt->id, 'name' => 'X', 'birth_date' => $dpt->birth_date->format('Y-m-d')])
         ->assertHasErrors('project');
     Livewire::test(DPT_LIST, ['project' => $project])->call('delete', $dpt->id)->assertHasErrors('project');
+    Livewire::test(DPT_LIST, ['project' => $project])
+        ->set('selected', [(string) $dpt->id])
+        ->call('deleteSelected')
+        ->assertHasErrors('project');
+    Livewire::test(DPT_LIST, ['project' => $project])
+        ->call('selectAllFiltered')
+        ->call('deleteSelected')
+        ->assertHasErrors('project');
 
     Livewire::test(DPT_IMPORT, ['project' => $project])
         ->set('file', xlsxUpload([['Nama', 'NIK', 'Tanggal lahir'], ['Budi', nikFor('1990-05-15'), '15/05/1990']]))
@@ -222,9 +282,9 @@ it('previews an excel file with automatic column mapping and reports problem row
 
     $analysis = $component->instance()->analysis;
 
-    expect($analysis['valid'])->toHaveCount(2)
-        ->and($analysis['problems'])->toHaveCount(5)
-        ->and(collect($analysis['problems'])->pluck('row')->all())->toBe([4, 5, 6, 7, 8])
+    expect($analysis['valid'])->toHaveCount(3)
+        ->and($analysis['problems'])->toHaveCount(4)
+        ->and(collect($analysis['problems'])->pluck('row')->all())->toBe([4, 5, 6, 7])
         ->and($analysis['valid'][1])->toMatchArray(['name' => 'Siti', 'birth_date' => '1992-03-09', 'gender' => 'Perempuan']);
 });
 
@@ -274,4 +334,16 @@ it('downloads the excel template', function () {
     $response = $this->get(route('dpt.template', ['project' => $project->code_project]))->assertOk();
 
     expect($response->baseResponse->headers->get('content-disposition'))->toContain('template-dpt.xlsx');
+});
+
+it('tells the user to map the wilayah column only when the project uses wilayah', function () {
+    $upload = fn () => xlsxUpload([['Nama', 'NIK', 'Tanggal lahir'], ['Budi', nikFor('1990-05-15'), '15/05/1990']]);
+
+    Livewire::test(DPT_IMPORT, ['project' => Project::factory()->withWilayah('Jaga')->create()])
+        ->set('file', $upload())
+        ->assertSee('Survei ini memakai wilayah');
+
+    Livewire::test(DPT_IMPORT, ['project' => Project::factory()->create()])
+        ->set('file', $upload())
+        ->assertDontSee('Survei ini memakai wilayah');
 });

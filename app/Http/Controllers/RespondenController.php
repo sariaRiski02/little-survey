@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Respondent;
 use App\Services\RespondentService;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -29,12 +32,17 @@ class RespondenController extends Controller
             ->deleteFileAfterSend();
     }
 
-    public function export(Project $project, RespondentService $service): StreamedResponse
+    public function export(Request $request, Project $project, RespondentService $service): StreamedResponse
     {
-        return response()->streamDownload(function () use ($project, $service) {
+        $filters = $request->validate([
+            'wilayah' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in([Respondent::STATUS_NOT_SENT, Respondent::STATUS_SENT, Respondent::STATUS_FILLED])],
+        ]);
+
+        return response()->streamDownload(function () use ($project, $service, $filters) {
             $out = fopen('php://output', 'w');
 
-            foreach ($service->exportRows($project) as $row) {
+            foreach ($service->exportRows($project, $filters['wilayah'] ?? null, $filters['status'] ?? null) as $row) {
                 fputcsv($out, $row);
             }
 

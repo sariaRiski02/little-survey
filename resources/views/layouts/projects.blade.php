@@ -13,11 +13,15 @@
 <a href="#konten" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-3">Lewati ke konten</a>
 
 <header class="border-b border-slate-200 bg-white">
-    <div class="mx-auto flex min-h-16 max-w-6xl items-center px-4 sm:px-8">
+    <div class="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
         <a href="{{ route('proyek.index') }}" class="flex min-h-11 items-center gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent font-extrabold text-white" aria-hidden="true">LS</span>
             <span class="font-bold">little survey</span>
         </a>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Keluar</button>
+        </form>
     </div>
 </header>
 

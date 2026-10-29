@@ -3,11 +3,14 @@
 use App\Models\Dpt;
 use App\Models\Project;
 use App\Models\Respondent;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 const SETTINGS_FORM = 'livewire-component.pengaturan.settings-form';
 

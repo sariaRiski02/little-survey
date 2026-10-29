@@ -85,7 +85,7 @@ new class extends Component
                     <img src="{{ asset('storage/'.$candidate->picture) }}" alt="{{ $candidate->name }}" class="h-14 w-14 shrink-0 rounded-2xl object-cover">
 
                 @else
-                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold text-white" style="background-color: {{ $candidate->color }}" aria-hidden="true">AS</span>
+                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold text-white" style="background-color: {{ $candidate->color }}" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($candidate->name)))->filter()->take(2)->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))->implode('') }}</span>
                 @endif
                 <div class="min-w-0">
                     <p class="truncate font-bold">{{ ucfirst($candidate->name) }}</p>
